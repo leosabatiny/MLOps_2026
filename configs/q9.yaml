@@ -1,0 +1,26 @@
+seed: 42
+
+data:
+  datapath: "/gpfs/scratch1/shared/scur2360/datasets/pcam/pcam_data/mlops_h5"
+  batchsize: 64
+  numworkers: 2
+
+model:
+  inputshape: [3, 96, 96]
+  hiddenunits: [512, 256]
+  dropoutrate: 0.2
+  numclasses: 2
+
+optimizer:
+  name: "adamw"   # allowed: "adamw" or "sgd"
+  lr: 0.0005
+  weightdecay: 0.01
+  momentum: 0.9   # only used if name == "sgd"
+
+training:
+  epochs: 3
+  log_after_n_steps: 50
+  save_dir: "outputs/q9"
+  checkpoint_dir: "outputs/q9/checkpoints"
+  losses_csv: "outputs/q9/losses.csv"
+

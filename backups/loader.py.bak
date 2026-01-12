@@ -1,0 +1,87 @@
+from pathlib import Path
+from typing import Dict, Tuple
+
+from torch.utils.data import DataLoader
+from torchvision import transforms
+
+from .pcam import PCAMDataset
+
+
+def get_dataloaders(config: Dict) -> Tuple[DataLoader, DataLoader]:
+    """
+    Factory function to create Train and Validation DataLoaders
+    using pre-split H5 files.
+    """
+    data_cfg = config["data"]
+    base_path = Path(data_cfg["data_path"])
+
+    # TODO: Define Transforms
+    # train_transform = ...
+    # val_transform = ...
+
+    # TODO: Define Paths for X and Y (train and val)
+    
+    # TODO: Instantiate PCAMDataset for train and val
+
+    # TODO: Create DataLoaders
+    # train_loader = ...
+    # val_loader = ...
+
+    batch_size = int(data_cfg["batch_size"])
+    num_workers = int(data_cfg.get("num_workers", 0))
+
+    # File names used in your extracted dataset and in the assignment tests
+    x_train = base_path / "camelyonpatch_level_2_split_train_x.h5"
+    y_train = base_path / "camelyonpatch_level_2_split_train_y.h5"
+    x_val = base_path / "camelyonpatch_level_2_split_valid_x.h5"
+    y_val = base_path / "camelyonpatch_level_2_split_valid_y.h5"
+
+    # PyTorch Intro II preprocessing pipeline: PIL -> Tensor -> Normalize
+    # (Normalize to roughly [-1,1] using mean=0.5 std=0.5 per channel)
+    if transforms is not None:
+        base_transform = transforms.Compose(
+            [
+                transforms.ToPILImage(),
+                transforms.ToTensor(),
+                transforms.Normalize((0.5, 0.5, 0.5), (0.5, 0.5, 0.5)),
+            ]
+        )
+    else:
+        base_transform = None
+
+    # Datasets
+    train_ds = PCAMDataset(str(x_train), str(y_train), transform=base_transform, filter_data=True)
+    val_ds = PCAMDataset(str(x_val), str(y_val), transform=base_transform, filter_data=False)
+
+    # Build WeightedRandomSampler from training labels (y file is small; OK to read fully)
+    y_key = _get_h5_key(y_train, preferred="y")
+    with h5py.File(y_train, "r") as f:
+        y = np.asarray(f[y_key][:]).squeeze().astype(np.int64)
+
+    class_counts = np.bincount(y)
+    class_weights = 1.0 / class_counts
+    sample_weights = class_weights[y]
+    sample_weights = torch.as_tensor(sample_weights, dtype=torch.double)
+
+    sampler = WeightedRandomSampler(
+        weights=sample_weights,
+        num_samples=len(sample_weights),
+        replacement=True,
+    )
+
+    # DataLoaders
+    train_loader = DataLoader(
+        train_ds,
+        batch_size=batch_size,
+        sampler=sampler, # <- sampler replaces shuffle
+        num_workers=num_workers,
+    )
+    val_loader = DataLoader(
+        val_ds,
+        batch_size=batch_size,
+        shuffle=False,
+        num_workers=num_workers,
+    )
+
+    return train_loader, val_loader
+

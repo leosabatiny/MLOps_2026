@@ -1,0 +1,12 @@
+2026-01-12 22:03:35,021 - train - INFO - Using device: cuda
+Traceback (most recent call last):
+  File "/gpfs/home3/scur2360/repos/MLOps_2026/experiments/train.py", line 72, in <module>
+    main(args)
+    ~~~~^^^^^^
+  File "/gpfs/home3/scur2360/repos/MLOps_2026/experiments/train.py", line 48, in main
+    train_loader, val_loader = get_dataloaders(config)
+                               ~~~~~~~~~~~~~~~^^^^^^^^
+  File "/gpfs/home3/scur2360/repos/MLOps_2026/src/ml_core/data/loader.py", line 16, in get_dataloaders
+    base_path = Path(data_cfg["data_path"])
+                     ~~~~~~~~^^^^^^^^^^^^^
+KeyError: 'data_path'

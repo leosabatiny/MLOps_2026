@@ -1,0 +1,18 @@
+#!/bin/bash
+#SBATCH --job-name=mlops_q9
+#SBATCH --partition=gpu_course
+#SBATCH --time=00:30:00
+#SBATCH --gpus=1
+#SBATCH --cpus-per-task=4
+#SBATCH --mem=16G
+#SBATCH --output=slurm-%j.out
+#SBATCH --error=slurm-%j.err
+
+set -euo pipefail
+
+cd /gpfs/home3/scur2360/repos/MLOps_2026
+source /gpfs/home3/scur2360/venvs/mlops-a1-q2/bin/activate
+
+python -c "import torch; print('CUDA available:', torch.cuda.is_available()); print('CUDA device count:', torch.cuda.device_count())"
+python experiments/train.py --config configs/q9.yaml
+python scripts/plot_q9_losses.py
