@@ -13,7 +13,15 @@ def get_dataloaders(config: Dict) -> Tuple[DataLoader, DataLoader]:
     using pre-split H5 files.
     """
     data_cfg = config["data"]
-    base_path = Path(data_cfg["data_path"])
+
+    data_root = data_cfg.get("datapath", None)
+    if data_root is None:
+        data_root = data_cfg.get("data_path", None)
+    if data_root is None:
+        raise KeyError("Missing data.datapath (or data.data_path) in config")
+
+    base_path = Path(data_root)
+
 
     # TODO: Define Transforms
     # train_transform = ...
@@ -38,8 +46,9 @@ def get_dataloaders(config: Dict) -> Tuple[DataLoader, DataLoader]:
     # TODO: Define Paths for X and Y (train and val)
     x_train = base_path / "camelyonpatch_level_2_split_train_x.h5"
     y_train = base_path / "camelyonpatch_level_2_split_train_y.h5"
-    x_val = base_path / "camelyonpatch_level_2_split_valid_x.h5"
-    y_val = base_path / "camelyonpatch_level_2_split_valid_y.h5"
+    x_val   = base_path / "camelyonpatch_level_2_split_valid_x.h5"
+    y_val   = base_path / "camelyonpatch_level_2_split_valid_y.h5"
+
 
     # TODO: Instantiate PCAMDataset for train and val
     train_dataset = PCAMDataset(str(x_train), str(y_train), transform=train_transform)
@@ -49,8 +58,12 @@ def get_dataloaders(config: Dict) -> Tuple[DataLoader, DataLoader]:
     # train_loader = ...
     # val_loader = ...
 
-    batch_size = int(data_cfg["batch_size"])
-    num_workers = int(data_cfg.get("num_workers", 0))
+    batch_size = int(data_cfg.get("batchsize", data_cfg.get("batch_size")))
+    num_workers = int(data_cfg.get("numworkers", data_cfg.get("num_workers", 0)))
+
+    if batch_size is None:
+        raise KeyError("Missing data.batchsize (or data.batch_size) in config")
+
 
     # --- WeightedRandomSampler to handle class imbalance ---
     torch = __import__("torch")
